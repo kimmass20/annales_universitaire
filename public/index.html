@@ -1,0 +1,33 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Annales & Révisions</title>
+  <link rel="stylesheet" href="/styles.css">
+</head>
+<body>
+  <header>
+    <h1>Annales & Révisions</h1>
+    <p>Annales universitaires. Les fichiers téléchargés et les favoris restent sur cet ordinateur.</p>
+  </header>
+  <main>
+    <form id="filtres">
+      <input id="q" type="search" placeholder="Mot-clé dans le titre ou la matière" autocomplete="off">
+      <select id="faculte"><option value="">Toutes les facultés</option></select>
+      <select id="annee"><option value="">Toutes les années</option></select>
+      <select id="matiere"><option value="">Toutes les matières</option></select>
+      <button type="submit">Appliquer</button>
+    </form>
+    <p id="resume"></p>
+    <ul id="liste"></ul>
+    <nav id="pages"></nav>
+    <section id="lecteur" hidden>
+      <h2 id="lecteur-titre"></h2>
+      <p id="lecteur-meta"></p>
+      <iframe id="lecteur-cadre" title="Annale téléchargée"></iframe>
+    </section>
+  </main>
+  <script src="/app.js"></script>
+</body>
+</html>

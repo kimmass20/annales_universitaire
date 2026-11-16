@@ -1,0 +1,13 @@
+{
+  "name": "annales-revisions",
+  "version": "1.0.0",
+  "description": "Annales & Révisions — Eliakim, Node.js, SQLite",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "scenario": "node scripts/scenario.js"
+  },
+  "engines": {
+    "node": ">=22"
+  }
+}

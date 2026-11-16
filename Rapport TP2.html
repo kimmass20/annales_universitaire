@@ -1,0 +1,108 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <title>Annales et Révisions — rapport TP2</title>
+  <style>
+    body { font-family: "Times New Roman", Times, serif; max-width: 820px; margin: 24px auto; color: #111; line-height: 1.35; }
+    h1 { font-size: 1.35rem; text-align: center; }
+    h2 { font-size: 1.05rem; margin-top: 1.2rem; }
+    h3 { font-size: 1rem; }
+    .auteurs { text-align: center; font-size: 0.95rem; }
+    .resume { font-size: 0.95rem; }
+    table { border-collapse: collapse; width: 100%; margin: 8px 0 12px; }
+    th, td { border: 1px solid #333; padding: 4px 6px; text-align: center; font-size: 0.92rem; }
+    caption { caption-side: bottom; font-size: 0.85rem; margin-top: 4px; }
+    @media print { body { margin: 12mm; } }
+  </style>
+</head>
+<body>
+  <h1>Performance d’une application d’annales universitaires selon la technologie d’implémentation</h1>
+  <p class="auteurs">
+    Princesses<br>FASI, UPC<br>adresse à compléter<br><br>
+    Agostinho<br>FASI, UPC<br>adresse à compléter<br><br>
+    Eliakim<br>FASI, UPC<br>adresse à compléter<br><br>
+    Meshoullam<br>FASI, UPC<br>adresse à compléter<br><br>
+    Néhémie<br>FASI, UPC<br>adresse à compléter
+  </p>
+
+  <p class="resume"><strong>Résumé—</strong> Les étudiants consultent des annales avec une connexion souvent instable. Cette étude compare quatre réalisations de la même application, « Annales &amp; Révisions ». Seule la version Node.js, écrite par Eliakim, est présente dans ce dépôt et a été mesurée. Le scénario commun a été exécuté une fois sur la machine de test : démarrage 46 ms, recherche « Maths L1 » 11 ms, dix téléchargements de 14 à 28 ms. Aucune conclusion comparative n’est possible tant que les trois autres versions n’ont pas produit leur propre <code>mesures.csv</code>.</p>
+  <p><strong>Mots-clés—</strong> performance, Node.js, SQLite, annales, hors-ligne</p>
+
+  <h2>I. Introduction</h2>
+  <p>Le temps d’ouverture, de recherche et de téléchargement compte pour un étudiant qui paie ses données et dont le réseau coupe souvent. Une application lente ou impossible à relire hors-ligne rate son usage.</p>
+  <p>On entend souvent qu’une application de bureau ou mobile serait plus rapide qu’une application web, ou qu’un framework serait plus lent qu’un autre. Ces affirmations restent générales tant qu’elles ne portent pas sur les mêmes fonctions et les mêmes données [1].</p>
+  <p>Question de recherche : à fonctions et données égales, quelle technologie parmi Flutter, Java Swing, Node.js et Django traite le plus vite le scénario de consultation d’annales ?</p>
+  <p>Hypothèse de travail : la version dont le stockage et les fichiers restent sur la même machine devrait afficher des délais courts pour la recherche et le téléchargement local. Cette hypothèse n’est pas tranchée ici, faute des trois autres séries de mesures.</p>
+  <p>Ce document décrit l’application, le protocole, la version Node.js réalisée, et les mesures réellement produites par <code>mesures.csv</code>. Les sections suivantes suivent le modèle du TP.</p>
+
+  <h2>II. Méthodologie</h2>
+  <h3>A. Application de référence</h3>
+  <p>« Annales &amp; Révisions » affiche 5 000 annales par pages de 20, filtre par faculté, année académique et matière, recherche un mot-clé dans le titre et la matière, télécharge un document seulement sur action de l’utilisateur, relit ce document depuis le stockage local, et ajoute ou retire un favori. Il n’y a pas de compte, de paiement, de notification, de commentaire ni de mode sombre.</p>
+  <p>Le fichier officiel commun des 5 000 annales n’a pas été déposé dans ce dossier. Le jeu utilisé est donc généré de façon déterministe, graine 20261116. Les quarante premières fiches sont Informatique, Maths, L1, afin que le scénario « Maths L1 » puis « Informatique » ait au moins dix documents. Les tailles vont de 50 000 octets à 500 000 octets. Ce jeu ne doit pas être présenté comme le fichier officiel s’il arrive plus tard.</p>
+
+  <h3>B. Technologies comparées</h3>
+  <table>
+    <caption>Tableau I. Technologies prévues</caption>
+    <tr><th>Technologie</th><th>Langage</th><th>Version relevée</th><th>Auteur</th></tr>
+    <tr><td>Application mobile</td><td>Dart / Flutter</td><td>non relevée ici</td><td>Princesses</td></tr>
+    <tr><td>Application de bureau</td><td>Java / Swing</td><td>non relevée ici</td><td>Agostinho</td></tr>
+    <tr><td>Application web locale</td><td>JavaScript / Node.js</td><td>Node.js 24.14.0, module <code>node:sqlite</code></td><td>Eliakim</td></tr>
+    <tr><td>Application web</td><td>Python / Django</td><td>non relevée ici</td><td>Meshoullam</td></tr>
+  </table>
+  <p>Le cahier des charges proposait IndexedDB et la Cache API pour Node.js. La version remise utilise SQLite, sur demande explicite, pour le même rôle de stockage local que les versions Flutter et Java. Le module <code>node:sqlite</code> est encore marqué expérimental par Node.js [1].</p>
+
+  <h3>C. Métriques</h3>
+  <p>Le journal <code>mesures.csv</code> a l’en-tête <code>evenement,timestamp_ms</code>. Le temps est en millisecondes depuis l’époque Unix. Les durées ci-dessous sont des différences entre un événement de début et l’événement de fin correspondant. La lecture hors-ligne n’a, dans le cahier des charges, qu’un événement de fin : sa durée n’est donc pas calculée.</p>
+  <ul>
+    <li>Démarrage : <code>demarrage_fin</code> moins <code>demarrage_debut</code>, en ms. Il couvre l’ouverture de SQLite et la mise en écoute du serveur.</li>
+    <li>Recherche : <code>recherche_fin</code> moins <code>recherche_debut</code>, en ms, pour la requête « Maths L1 ».</li>
+    <li>Téléchargement : <code>telechargement_fin</code> moins <code>telechargement_debut</code>, en ms, pour chaque fichier écrit sur le disque.</li>
+  </ul>
+
+  <h3>D. Outils et environnement de test</h3>
+  <p>Aucun outil de charge externe n’a été utilisé. Le scénario est le script <code>scripts/scenario.js</code>, qui appelle le serveur déjà lancé. Machine : Windows 10.0.26200, Intel Core i7-13620H, 16 cœurs logiques, 16 045 Mo de mémoire. Serveur : <code>http://127.0.0.1:3080</code>. Journal activé par <code>MESURES_ACTIVEES=true</code>.</p>
+
+  <h3>E. Déroulement des tests</h3>
+  <ol>
+    <li>Démarrer <code>node server.js</code> avec <code>MESURES_ACTIVEES=true</code>.</li>
+    <li>Lancer <code>node scripts/scenario.js</code>.</li>
+    <li>Le script recherche « Maths L1 », filtre la faculté Informatique, télécharge les 10 premières annales du résultat, lit les 5 premières, ajoute 3 favoris.</li>
+    <li>Lire <code>mesures.csv</code>. Ne pas y ajouter de chiffres à la main.</li>
+  </ol>
+  <p>L’étape « couper le réseau » n’a pas été simulée par un outil. La lecture a utilisé le fichier déjà enregistré dans <code>data/telecharges</code>, le serveur local restant allumé. Un autre groupe peut refaire les étapes 1 à 4 telles quelles.</p>
+
+  <h2>III. Développement</h2>
+  <h3>A. Réalisation des versions</h3>
+  <p>Seule la version Node.js est dans ce dossier. Les classes sont <code>Annale</code>, <code>GenerateurAnnales</code>, <code>BaseAnnales</code>, <code>JournalMesures</code>, <code>ServeurAnnales</code> et, dans le navigateur, <code>ApplicationAnnales</code>. Il n’y a pas de dépendance npm : le serveur utilise les modules <code>node:http</code> et <code>node:sqlite</code>. Chaque téléchargement écrit un PDF dont la taille en octets est exactement <code>taille_octets</code>.</p>
+  <h3>B. Équivalence fonctionnelle</h3>
+  <p>Les versions Flutter, Java et Django ne sont pas dans ce dépôt. Leur équivalence n’a donc pas été vérifiée. Sur la version Node.js, le scénario a renvoyé 212 annales pour « Maths L1 » et 70 après le filtre Informatique, puis 10 téléchargements, 5 lectures et 3 favoris.</p>
+  <h3>C. Difficultés rencontrées</h3>
+  <p>Le fichier de données commun et le bloc de versions imposées manquaient. Le stockage demandé d’abord pour le web (IndexedDB) a été remplacé par SQLite. Un PDF de taille imposée a été construit en complétant le flux du document par des espaces, afin que la taille mesurée soit celle du cahier des charges.</p>
+
+  <h2>IV. Résultats et discussion</h2>
+  <h3>A. Données recueillies</h3>
+  <p>Une exécution, le 16 novembre 2026. Fichier source : <code>mesures.csv</code>. Résultats Node.js : démarrage 46 ms ; recherche 11 ms ; téléchargements 15, 15, 16, 15, 16, 14, 16, 15, 28 et 17 ms (moyenne 17 ms, somme 167 ms) ; 5 événements <code>lecture_hors_ligne_fin</code>. Le fichier contrôlé <code>ann-000002.pdf</code> fait 51 994 octets, comme en base, et commence par <code>%PDF</code>.</p>
+  <table>
+    <caption>Tableau II. Synthèse des mesures. Une seule exécution. Les autres technologies n’ont pas de journal dans ce dépôt.</caption>
+    <tr><th>Technologie</th><th>Démarrage (ms)</th><th>Recherche (ms)</th><th>Téléchargement moyen (ms)</th></tr>
+    <tr><td>Flutter</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Java Swing</td><td>—</td><td>—</td><td>—</td></tr>
+    <tr><td>Node.js</td><td>46</td><td>11</td><td>17</td></tr>
+    <tr><td>Django</td><td>—</td><td>—</td><td>—</td></tr>
+  </table>
+
+  <h3>B. Analyse</h3>
+  <p>Sur cette machine et cette unique exécution, la version Node.js répond en moins de 50 ms au démarrage et en 11 ms à la recherche sur 5 000 lignes. Neuf téléchargements sur dix durent 14 à 17 ms ; un dure 28 ms. Ces chiffres décrivent un serveur local, pas un réseau mobile. Les figures du modèle, qui comparaient quatre technologies avec des valeurs fictives, ne sont pas reproduites : il n’y a pas quatre séries à tracer.</p>
+
+  <h3>C. Interprétation et discussion</h3>
+  <p>Les délais Node.js sont courts parce que la base, le script et les fichiers sont sur la même machine. Cela ne confirme pas que Node.js serait plus rapide que Flutter, Java ou Django. On ne peut pas conclure sur la question de recherche. Limites : une seule répétition, jeu de données de remplacement, quarante fiches forcées, module SQLite expérimental, réseau non coupé, pas de durée de lecture faute d’événement de début.</p>
+
+  <h2>V. Conclusion</h2>
+  <p>La question portait sur la technologie la plus rapide pour la même application d’annales. La version Node.js est terminée et son scénario a été mesuré. La réponse comparative n’est pas connue. La suite nécessaire est de déposer les <code>mesures.csv</code> de Princesses, Agostinho et Meshoullam, produits avec le même scénario, puis de remplir le tableau II sans réécrire les nombres.</p>
+
+  <h2>Références</h2>
+  <p>[1] Node.js, « SQLite », documentation du module <code>node:sqlite</code>. [En ligne]. Disponible : https://nodejs.org/api/sqlite.html. Consulté le 16 novembre 2026.</p>
+  <p>[2] SQLite, « Appropriate Uses For SQLite ». [En ligne]. Disponible : https://www.sqlite.org/whentouse.html. Consulté le 16 novembre 2026.</p>
+</body>
+</html>
